@@ -36,6 +36,13 @@ log = logging.getLogger(__name__)
 
 
 class SaveFile:
+    @staticmethod
+    def _get_connection_count(file_size: int, max_count: int = 20,
+                              full_size: int = 100 * 1024 * 1024) -> int:
+        if file_size > full_size:
+            return max_count
+        return math.ceil((file_size / full_size) * max_count)
+        
     async def save_file(
         self: "pyrogram.Client",
         path: Union[str, BinaryIO],
@@ -135,7 +142,7 @@ class SaveFile:
 
             file_total_parts = int(math.ceil(file_size / part_size))
             is_big = file_size > 10 * 1024 * 1024
-            workers_count = 4 if is_big else 1
+            workers_count = self._get_connection_count(file_size)
             is_missing_part = file_id is not None
             file_id = file_id or self.rnd_id()
             md5_sum = md5() if not is_big and not is_missing_part else None
